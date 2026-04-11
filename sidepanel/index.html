@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FB Post Generator</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="header">
+    <h1>FB Post Generator</h1>
+    <p>Create viral news-style Facebook posts</p>
+  </div>
+
+  <!-- Settings Section -->
+  <div class="section">
+    <div class="section-title">Settings</div>
+
+    <div class="form-group">
+      <label for="imageRatio">Image Ratio</label>
+      <select id="imageRatio">
+        <option value="1:1">1:1 (Square)</option>
+        <option value="3:4" selected>3:4 (Portrait)</option>
+        <option value="9:16">9:16 (Story)</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label for="language">Language</label>
+      <select id="language">
+        <option value="English">English</option>
+        <option value="German">German</option>
+        <option value="Italian">Italian</option>
+        <option value="French">French</option>
+        <option value="Spanish">Spanish</option>
+        <option value="Swedish">Swedish</option>
+        <option value="Danish">Danish</option>
+        <option value="Dutch">Dutch</option>
+        <option value="Portuguese">Portuguese</option>
+        <option value="Norwegian">Norwegian</option>
+        <option value="Finnish">Finnish</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label for="country">Country / Context</label>
+      <select id="country">
+        <!-- Populated dynamically based on language -->
+      </select>
+    </div>
+  </div>
+
+  <!-- Source Section -->
+  <div class="section">
+    <div class="section-title">Content Source</div>
+
+    <div class="form-group">
+      <div class="source-toggle">
+        <label>
+          <input type="radio" name="source" id="sourceUrl" value="url" checked>
+          URL
+        </label>
+        <label>
+          <input type="radio" name="source" id="sourceText" value="text">
+          Text
+        </label>
+      </div>
+    </div>
+
+    <div class="form-group" id="urlGroup">
+      <input type="url" id="urlInput" placeholder="https://example.com/article...">
+    </div>
+
+    <div class="form-group" id="textGroup" style="display: none;">
+      <textarea id="textInput" maxlength="400" placeholder="Enter your news topic or content..."></textarea>
+      <div class="char-count" id="charCount">0/400</div>
+    </div>
+  </div>
+
+  <!-- Image Section -->
+  <div class="section">
+    <div class="section-title">Image (Optional)</div>
+
+    <div class="form-group">
+      <div class="image-upload" id="imageUpload">
+        <input type="file" id="imageInput" accept="image/*" style="display: none;">
+        <div class="upload-placeholder" id="uploadPlaceholder">
+          <div class="upload-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+              <circle cx="8.5" cy="8.5" r="1.5"></circle>
+              <polyline points="21 15 16 10 5 21"></polyline>
+            </svg>
+          </div>
+          <div class="upload-text">Click, drag & drop, or paste an image</div>
+          <div class="upload-hint">Supports JPG, PNG, GIF, WebP</div>
+        </div>
+        <div class="image-preview" id="imagePreview">
+          <img id="previewImg" alt="Preview">
+          <button class="remove-image" id="removeImage" title="Remove image">&times;</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Actions -->
+  <button class="generate-btn" id="generateBtn">Generate</button>
+  <div class="status" id="status"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
