@@ -1,6 +1,6 @@
 // ── Language → Country mapping ──────────────────────────────────────
 const LANG_COUNTRY_MAP = {
-  English:    ['United Kingdom', 'United States', 'Australia', 'New Zealand'],
+  English:    ['United Kingdom', 'United States', 'Australia', 'New Zealand', 'Canada'],
   German:     ['Germany', 'Austria', 'Switzerland'],
   Italian:    ['Italy'],
   French:     ['France', 'Belgium', 'Switzerland'],
@@ -370,15 +370,21 @@ async function handleGenerate() {
 
   el.generateBtn.disabled   = true;
   el.generateBtn.textContent = 'Sending...';
-  showStatus('Sending prompt to ChatGPT...', 'info');
+  showStatus('Sending prompt...', 'info');
 
   try {
     // Find the active ChatGPT tab
     const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
     const tab = tabs[0];
 
-    if (!tab || (!tab.url?.includes('chatgpt.com') && !tab.url?.includes('chat.openai.com'))) {
-      showStatus('Please open ChatGPT in the active tab.', 'error', prompt);
+    const url = tab?.url || '';
+    const isSupported =
+      url.includes('chatgpt.com') ||
+      url.includes('chat.openai.com') ||
+      url.includes('gemini.google.com');
+
+    if (!tab || !isSupported) {
+      showStatus('Please open ChatGPT or Gemini in the active tab.', 'error', prompt);
       return;
     }
 
@@ -401,7 +407,8 @@ async function handleGenerate() {
 
     if (response?.success) {
       clearInputs();
-      showStatus('Prompt inserted into ChatGPT! Review and press Send.', 'success');
+      const target = url.includes('gemini.google.com') ? 'Gemini' : 'ChatGPT';
+      showStatus(`Prompt inserted into ${target}! Review and press Send.`, 'success');
     } else {
       showStatus(
         response?.error || 'Failed to insert prompt.',

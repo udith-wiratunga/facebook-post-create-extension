@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="blueGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#2D8CFF"/>
+      <stop offset="100%" stop-color="#003DCC"/>
+    </linearGradient>
+  </defs>
+
+  <rect x="70" y="70" width="340" height="340" rx="80" fill="url(#blueGrad)"/>
+  <polygon points="120,390 120,460 190,390" fill="#003DCC"/>
+
+  <rect x="120" y="120" width="220" height="220" rx="30" fill="white"/>
+
+  <rect x="150" y="160" width="40" height="40" rx="20" fill="#2D8CFF"/>
+  <rect x="210" y="165" width="90" height="12" rx="6" fill="#D9E1F2"/>
+  <rect x="150" y="220" width="150" height="12" rx="6" fill="#D9E1F2"/>
+  <rect x="150" y="255" width="150" height="12" rx="6" fill="#D9E1F2"/>
+
+  <rect x="150" y="290" width="140" height="60" rx="12" fill="#2D8CFF"/>
+  <circle cx="265" cy="315" r="10" fill="white"/>
+  <polygon points="165,340 205,310 235,330 290,290 290,350 165,350" fill="#004CFF"/>
+
+  <g transform="translate(290,60)">
+    <path d="M50 0 A50 50 0 0 1 100 50 L70 50 A20 20 0 0 0 50 30 Z" fill="#FF3B30"/>
+    <path d="M100 50 A50 50 0 0 1 50 100 L50 70 A20 20 0 0 0 70 50 Z" fill="#FFCC00"/>
+    <path d="M50 100 A50 50 0 0 1 0 50 L30 50 A20 20 0 0 0 50 70 Z" fill="#34C759"/>
+    <circle cx="50" cy="50" r="18" fill="#2D8CFF" stroke="white" stroke-width="8"/>
+  </g>
+</svg>

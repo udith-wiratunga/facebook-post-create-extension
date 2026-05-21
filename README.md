@@ -1,6 +1,10 @@
 # FB Post Generator — Chrome Extension
 
-A Chrome extension that generates high-impact, news-style Facebook image posts using ChatGPT. It opens as a side panel on ChatGPT and injects fully crafted prompts into the chat input.
+<p align="center">
+  <img src="sidepanel/logo.png" alt="FB Post Generator" width="600">
+</p>
+
+A Chrome extension that generates high-impact, news-style Facebook image posts using ChatGPT or Google Gemini. It opens as a side panel on either chat site and injects fully crafted prompts into the chat input.
 
 ## Features
 
@@ -15,7 +19,7 @@ A Chrome extension that generates high-impact, news-style Facebook image posts u
 
 ## Supported Countries
 
-English (UK, USA, Australia, New Zealand), German (Germany, Austria, Switzerland), Italian (Italy), French (France, Belgium, Switzerland), Spanish (Spain), Swedish (Sweden), Danish (Denmark), Dutch (Netherlands, Belgium), Portuguese (Portugal, Brazil), Norwegian (Norway), Finnish (Finland)
+English (UK, USA, Australia, New Zealand, Canada), German (Germany, Austria, Switzerland), Italian (Italy), French (France, Belgium, Switzerland), Spanish (Spain), Swedish (Sweden), Danish (Denmark), Dutch (Netherlands, Belgium), Portuguese (Portugal, Brazil), Norwegian (Norway), Finnish (Finland)
 
 ## Installation
 
@@ -27,26 +31,27 @@ English (UK, USA, Australia, New Zealand), German (Germany, Austria, Switzerland
 
 ## Usage
 
-1. Open [chatgpt.com](https://chatgpt.com) in Chrome.
+1. Open [chatgpt.com](https://chatgpt.com) or [gemini.google.com](https://gemini.google.com) in Chrome.
 2. Click the **FB Post Generator** extension icon in the toolbar to open the side panel.
 3. Configure your settings:
    - Select **Image Ratio**, **Language**, and **Country**.
    - Choose **URL** or **Text** as your content source.
    - Optionally upload a reference image.
 4. Click **Generate**.
-5. The prompt appears in ChatGPT's input. Review it and press Send.
+5. The prompt appears in the chat input (ChatGPT or Gemini, whichever is the active tab). Review it and press Send.
 
 ## Project Structure
 
 ```
 facebook-post-create-extension/
 ├── manifest.json            # Chrome Manifest V3 configuration
-├── background.js            # Service worker — enables side panel on ChatGPT tabs
-├── content.js               # Content script — injects prompts and images into ChatGPT
+├── background.js            # Service worker — enables side panel on ChatGPT and Gemini tabs
+├── content.js               # Content script — injects prompts and images into ChatGPT or Gemini
 ├── sidepanel/
 │   ├── index.html           # Side panel UI
 │   ├── styles.css           # Dark theme styling
-│   └── app.js               # Form logic, settings persistence, prompt construction
+│   ├── app.js               # Form logic, settings persistence, prompt construction
+│   └── logo.png             # Branding logo shown in the side panel header
 ├── icons/
 │   ├── icon16.png           # Toolbar icon
 │   ├── icon48.png           # Extensions page icon
@@ -56,11 +61,11 @@ facebook-post-create-extension/
 
 ## How It Works
 
-1. **background.js** enables the side panel only when the active tab is ChatGPT.
+1. **background.js** enables the side panel only when the active tab is ChatGPT or Gemini.
 2. **sidepanel/app.js** manages the form, persists user preferences to `chrome.storage.local`, and builds the full prompt string based on the selected source type (URL or Text).
 3. When the user clicks Generate, the side panel sends the prompt (and optional image) to **content.js** via `chrome.tabs.sendMessage`.
-4. **content.js** locates ChatGPT's input field, injects the prompt text, and attaches any uploaded image using the file input or paste/drop simulation.
-5. The user reviews the prompt in ChatGPT and presses Send.
+4. **content.js** detects which platform it is running on (ChatGPT's ProseMirror editor vs. Gemini's Quill `rich-textarea`), locates the chat input field, injects the prompt text, and attaches any uploaded image using the file input or paste/drop simulation.
+5. The user reviews the prompt in the chat and presses Send.
 
 ## Prompt Templates
 
@@ -93,7 +98,7 @@ Creates a headline-driven news image from a text description. Includes:
 ## Requirements
 
 - Google Chrome (version 114 or later for Side Panel API support)
-- A ChatGPT account at [chatgpt.com](https://chatgpt.com)
+- A ChatGPT account at [chatgpt.com](https://chatgpt.com) and/or a Google account for [gemini.google.com](https://gemini.google.com)
 
 ## License
 

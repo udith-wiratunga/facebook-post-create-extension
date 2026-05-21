@@ -1,0 +1,9 @@
+# Claude Code local agent state
+.claude/
+
+# OS / editor cruft
+Thumbs.db
+.DS_Store
+*.swp
+.vscode/
+.idea/

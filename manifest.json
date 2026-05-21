@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "FB Post Generator",
-  "version": "1.0.0",
-  "description": "Generate high-impact Facebook news-style image posts using ChatGPT",
+  "version": "1.1.0",
+  "description": "Generate high-impact Facebook news-style image posts using ChatGPT or Google Gemini",
   "permissions": [
     "sidePanel",
     "storage",
@@ -11,7 +11,8 @@
   ],
   "host_permissions": [
     "https://chatgpt.com/*",
-    "https://chat.openai.com/*"
+    "https://chat.openai.com/*",
+    "https://gemini.google.com/*"
   ],
   "background": {
     "service_worker": "background.js"
@@ -20,7 +21,8 @@
     {
       "matches": [
         "https://chatgpt.com/*",
-        "https://chat.openai.com/*"
+        "https://chat.openai.com/*",
+        "https://gemini.google.com/*"
       ],
       "js": ["content.js"],
       "run_at": "document_idle"

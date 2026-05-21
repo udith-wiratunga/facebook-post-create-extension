@@ -28,7 +28,7 @@ async function handleGenerate(data) {
   if (!injected) {
     return {
       success: false,
-      error: 'Could not find ChatGPT input field. Make sure ChatGPT is fully loaded.'
+      error: 'Could not find the chat input field. Make sure ChatGPT or Gemini is fully loaded.'
     };
   }
 
@@ -92,7 +92,11 @@ async function uploadImage(imageData) {
       document.querySelector('[aria-label="Attach files"]') ||
       document.querySelector('button[aria-label*="ttach"]') ||
       document.querySelector('[data-testid="attachment-button"]') ||
-      document.querySelector('button[aria-label*="pload"]');
+      document.querySelector('button[aria-label*="pload"]') ||
+      // Gemini — "Add files" / "+" menu trigger
+      document.querySelector('button[aria-label*="Add files"]') ||
+      document.querySelector('button[aria-label*="Upload file"]') ||
+      document.querySelector('uploader button');
     if (attachBtn) {
       attachBtn.click();
       await sleep(600);
@@ -145,13 +149,26 @@ async function uploadImage(imageData) {
 
 // ── Helpers ─────────────────────────────────────────────────────────
 function findTextarea() {
-  const selectors = [
-    '#prompt-textarea',
-    '[data-testid="prompt-textarea"]',
-    'div[contenteditable="true"].ProseMirror',
-    'div[contenteditable="true"]',
-    'textarea'
-  ];
+  const isGemini = location.hostname.includes('gemini.google.com');
+
+  const selectors = isGemini
+    ? [
+        // Gemini uses a custom <rich-textarea> wrapping a Quill .ql-editor
+        'rich-textarea .ql-editor[contenteditable="true"]',
+        'rich-textarea div[contenteditable="true"]',
+        '.ql-editor[contenteditable="true"]',
+        'div[contenteditable="true"][role="textbox"]',
+        'div[contenteditable="true"]',
+        'textarea'
+      ]
+    : [
+        '#prompt-textarea',
+        '[data-testid="prompt-textarea"]',
+        'div[contenteditable="true"].ProseMirror',
+        'div[contenteditable="true"]',
+        'textarea'
+      ];
+
   for (const s of selectors) {
     const el = document.querySelector(s);
     if (el) return el;
