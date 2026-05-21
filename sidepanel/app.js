@@ -153,8 +153,8 @@ function bindEvents() {
   // Character counter
   el.textInput.addEventListener('input', (e) => {
     const len = e.target.value.length;
-    el.charCount.textContent = `${len}/400`;
-    el.charCount.classList.toggle('over-limit', len > 400);
+    el.charCount.textContent = `${len}/1000`;
+    el.charCount.classList.toggle('over-limit', len > 1000);
   });
 
   // Image upload — click
@@ -236,7 +236,7 @@ function clearInputs() {
   // Clear source fields
   el.urlInput.value  = '';
   el.textInput.value = '';
-  el.charCount.textContent = '0/400';
+  el.charCount.textContent = '0/1000';
   el.charCount.classList.remove('over-limit');
 
   // Clear image
@@ -357,8 +357,8 @@ async function handleGenerate() {
     showStatus('Please enter text content.', 'error');
     return;
   }
-  if (state.sourceType === 'text' && el.textInput.value.length > 400) {
-    showStatus('Text exceeds 400 character limit.', 'error');
+  if (state.sourceType === 'text' && el.textInput.value.length > 1000) {
+    showStatus('Text exceeds 1000 character limit.', 'error');
     return;
   }
 

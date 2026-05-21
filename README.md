@@ -12,7 +12,7 @@ A Chrome extension that generates high-impact, news-style Facebook image posts u
 - **Language** — English, German, Italian, French, Spanish, Swedish, Danish, Dutch, Portuguese, Norwegian, Finnish. Default is English. Saved across sessions.
 - **Country / Context** — Auto-populated based on language (e.g. English → UK, USA, Australia, New Zealand). Used for localised news tone.
 - **Source: URL** — Paste an article URL. The prompt instructs ChatGPT to extract information from the article and create a tabloid-style news image.
-- **Source: Text** — Type up to 400 characters describing the news topic. The prompt builds a headline-driven image from scratch.
+- **Source: Text** — Type up to 1000 characters describing the news topic. The prompt builds a headline-driven image from scratch.
 - **Image Upload** — Optionally attach an image via click, drag & drop, or Ctrl+V paste. The image is uploaded into ChatGPT alongside the prompt.
 - **Generate** — Builds the full prompt, injects it into ChatGPT's input, and clears the form for the next post.
 - **Copy Fallback** — If prompt injection fails, a "Copy Prompt to Clipboard" button appears so you can paste manually.
