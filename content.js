@@ -55,25 +55,31 @@ async function injectPrompt(text) {
   } else {
     // ContentEditable (ProseMirror / Lexical / Quill)
     textarea.focus();
-
-    // Select all so the paste replaces existing content
-    const sel = window.getSelection();
-    sel.selectAllChildren(textarea);
     await sleep(50);
 
-    // Primary: clipboard paste simulation — ProseMirror's own paste handler
-    // processes this correctly and keeps its internal state in sync
+    // Primary: selectAll → delete → insertText
+    // ProseMirror listens for execCommand natively and updates its internal
+    // document model correctly — this is the only reliable method
+    document.execCommand('selectAll', false, null);
+    document.execCommand('delete', false, null);
+    await sleep(50);
+    const inserted = document.execCommand('insertText', false, text);
+    if (inserted) return true;
+
+    // Fallback 1: clipboard paste simulation
+    const sel = window.getSelection();
+    sel.selectAllChildren(textarea);
+    await sleep(30);
     if (injectViaPaste(textarea, text)) return true;
 
-    // Fallback: execCommand line-by-line insertion
+    // Fallback 2: line-by-line execCommand
+    document.execCommand('selectAll', false, null);
     document.execCommand('delete', false, null);
     await sleep(50);
     const lines = text.split('\n');
     for (let i = 0; i < lines.length; i++) {
       if (i > 0) document.execCommand('insertParagraph', false, null);
-      if (lines[i].length > 0) {
-        document.execCommand('insertText', false, lines[i]);
-      }
+      if (lines[i].length > 0) document.execCommand('insertText', false, lines[i]);
     }
     textarea.dispatchEvent(new Event('input', { bubbles: true }));
     textarea.dispatchEvent(new Event('change', { bubbles: true }));
@@ -195,17 +201,23 @@ function findTextarea() {
         'textarea'
       ]
     : [
-        // 2026 ChatGPT — scoped to the composer form so transcript editors never match
+        // Nov 2026 ChatGPT — Lexical editor inside data-composer-editor-host
+        '[data-composer-editor-host] .ProseMirror[contenteditable="true"]',
+        '[data-composer-editor-host] [contenteditable="true"]',
+        // Sep 2026 ChatGPT — scoped to composer form (avoids transcript editors)
         'form[data-chatgpt-composer] .ProseMirror[contenteditable="true"]',
         'form[data-chatgpt-composer] [contenteditable="true"]',
         // Other 2026 composer attributes
         '[contenteditable="true"][data-composer-markdown]',
         '[contenteditable="true"][aria-label="Ask ChatGPT"]',
         '.ProseMirror[contenteditable="true"]',
-        // Legacy selectors (older ChatGPT builds)
+        // Plain textarea variant (mobile/simplified ChatGPT build)
+        'textarea[name="prompt"]',
+        '#mobile-composer-prompt',
+        // Legacy selectors (older builds)
         '#prompt-textarea',
         '[data-testid="prompt-textarea"]',
-        // Generic fallbacks
+        // Generic fallback
         'div[contenteditable="true"]',
         'textarea'
       ];
