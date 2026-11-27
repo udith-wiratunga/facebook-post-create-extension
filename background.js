@@ -8,7 +8,8 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
   const isSupported =
     tab.url.includes('chatgpt.com') ||
     tab.url.includes('chat.openai.com') ||
-    tab.url.includes('gemini.google.com');
+    tab.url.includes('gemini.google.com') ||
+    tab.url.includes('meta.ai');
 
   chrome.sidePanel.setOptions({
     tabId,

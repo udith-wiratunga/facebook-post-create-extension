@@ -28,7 +28,7 @@ async function handleGenerate(data) {
   if (!injected) {
     return {
       success: false,
-      error: 'Could not find the chat input field. Make sure ChatGPT or Gemini is fully loaded.'
+      error: 'Could not find the chat input field. Make sure ChatGPT, Gemini, or Meta AI is fully loaded.'
     };
   }
 
@@ -53,16 +53,21 @@ async function injectPrompt(text) {
     textarea.dispatchEvent(new Event('input', { bubbles: true }));
     textarea.dispatchEvent(new Event('change', { bubbles: true }));
   } else {
-    // ContentEditable (ProseMirror) – the current ChatGPT editor
+    // ContentEditable (ProseMirror / Lexical / Quill)
     textarea.focus();
 
-    // Select all existing content & delete
+    // Select all so the paste replaces existing content
     const sel = window.getSelection();
     sel.selectAllChildren(textarea);
-    document.execCommand('delete', false, null);
     await sleep(50);
 
-    // Insert line-by-line so paragraph structure is preserved
+    // Primary: clipboard paste simulation — ProseMirror's own paste handler
+    // processes this correctly and keeps its internal state in sync
+    if (injectViaPaste(textarea, text)) return true;
+
+    // Fallback: execCommand line-by-line insertion
+    document.execCommand('delete', false, null);
+    await sleep(50);
     const lines = text.split('\n');
     for (let i = 0; i < lines.length; i++) {
       if (i > 0) document.execCommand('insertParagraph', false, null);
@@ -70,13 +75,27 @@ async function injectPrompt(text) {
         document.execCommand('insertText', false, lines[i]);
       }
     }
-
-    // Fire events so React / ProseMirror picks up the change
     textarea.dispatchEvent(new Event('input', { bubbles: true }));
     textarea.dispatchEvent(new Event('change', { bubbles: true }));
   }
 
   return true;
+}
+
+// Simulate a paste event carrying plain text — works with ProseMirror, Lexical, and Quill
+function injectViaPaste(el, text) {
+  try {
+    const dt = new DataTransfer();
+    dt.setData('text/plain', text);
+    el.dispatchEvent(new ClipboardEvent('paste', {
+      bubbles: true,
+      cancelable: true,
+      clipboardData: dt
+    }));
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 // ── Image upload ────────────────────────────────────────────────────
@@ -96,7 +115,11 @@ async function uploadImage(imageData) {
       // Gemini — "Add files" / "+" menu trigger
       document.querySelector('button[aria-label*="Add files"]') ||
       document.querySelector('button[aria-label*="Upload file"]') ||
-      document.querySelector('uploader button');
+      document.querySelector('uploader button') ||
+      // Meta.ai — image/media button
+      document.querySelector('button[aria-label*="mage"]') ||
+      document.querySelector('button[aria-label*="edia"]') ||
+      document.querySelector('[data-testid="media-attachment-button"]');
     if (attachBtn) {
       attachBtn.click();
       await sleep(600);
@@ -150,6 +173,7 @@ async function uploadImage(imageData) {
 // ── Helpers ─────────────────────────────────────────────────────────
 function findTextarea() {
   const isGemini = location.hostname.includes('gemini.google.com');
+  const isMeta   = location.hostname.includes('meta.ai');
 
   const selectors = isGemini
     ? [
@@ -161,10 +185,27 @@ function findTextarea() {
         'div[contenteditable="true"]',
         'textarea'
       ]
+    : isMeta
+    ? [
+        // Meta.ai uses the Lexical editor (Meta's own open-source editor)
+        'div[contenteditable="true"][data-lexical-editor="true"]',
+        'div[aria-label="Message Meta AI"][contenteditable="true"]',
+        'div[contenteditable="true"][role="textbox"]',
+        'div[contenteditable="true"]',
+        'textarea'
+      ]
     : [
+        // 2026 ChatGPT — scoped to the composer form so transcript editors never match
+        'form[data-chatgpt-composer] .ProseMirror[contenteditable="true"]',
+        'form[data-chatgpt-composer] [contenteditable="true"]',
+        // Other 2026 composer attributes
+        '[contenteditable="true"][data-composer-markdown]',
+        '[contenteditable="true"][aria-label="Ask ChatGPT"]',
+        '.ProseMirror[contenteditable="true"]',
+        // Legacy selectors (older ChatGPT builds)
         '#prompt-textarea',
         '[data-testid="prompt-textarea"]',
-        'div[contenteditable="true"].ProseMirror',
+        // Generic fallbacks
         'div[contenteditable="true"]',
         'textarea'
       ];

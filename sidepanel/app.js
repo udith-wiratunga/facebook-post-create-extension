@@ -1,23 +1,23 @@
 // ── Language → Country mapping ──────────────────────────────────────
 const LANG_COUNTRY_MAP = {
-  English:    ['United Kingdom', 'United States', 'Australia', 'New Zealand', 'Canada'],
-  German:     ['Germany', 'Austria', 'Switzerland'],
-  Italian:    ['Italy'],
-  French:     ['France', 'Belgium', 'Switzerland'],
-  Spanish:    ['Spain'],
-  Swedish:    ['Sweden'],
-  Danish:     ['Denmark'],
-  Dutch:      ['Netherlands', 'Belgium'],
+  English: ['United Kingdom', 'United States', 'Australia', 'New Zealand', 'Canada'],
+  German: ['Germany', 'Austria', 'Switzerland'],
+  Italian: ['Italy'],
+  French: ['France', 'Belgium', 'Switzerland'],
+  Spanish: ['Spain'],
+  Swedish: ['Sweden'],
+  Danish: ['Denmark'],
+  Dutch: ['Netherlands', 'Belgium'],
   Portuguese: ['Portugal', 'Brazil'],
-  Norwegian:  ['Norway'],
-  Finnish:    ['Finland']
+  Norwegian: ['Norway'],
+  Finnish: ['Finland']
 };
 
 // ── Defaults ────────────────────────────────────────────────────────
 const DEFAULTS = {
   imageRatio: '3:4',
-  language:   'English',
-  country:    'United Kingdom',
+  language: 'English',
+  country: 'United Kingdom',
   sourceType: 'url'
 };
 
@@ -40,24 +40,24 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 function cacheElements() {
   el = {
-    imageRatio:       $('imageRatio'),
-    language:         $('language'),
-    country:          $('country'),
-    sourceUrl:        $('sourceUrl'),
-    sourceText:       $('sourceText'),
-    urlGroup:         $('urlGroup'),
-    textGroup:        $('textGroup'),
-    urlInput:         $('urlInput'),
-    textInput:        $('textInput'),
-    charCount:        $('charCount'),
-    imageUpload:      $('imageUpload'),
-    imageInput:       $('imageInput'),
-    uploadPlaceholder:$('uploadPlaceholder'),
-    imagePreview:     $('imagePreview'),
-    previewImg:       $('previewImg'),
-    removeImage:      $('removeImage'),
-    generateBtn:      $('generateBtn'),
-    status:           $('status')
+    imageRatio: $('imageRatio'),
+    language: $('language'),
+    country: $('country'),
+    sourceUrl: $('sourceUrl'),
+    sourceText: $('sourceText'),
+    urlGroup: $('urlGroup'),
+    textGroup: $('textGroup'),
+    urlInput: $('urlInput'),
+    textInput: $('textInput'),
+    charCount: $('charCount'),
+    imageUpload: $('imageUpload'),
+    imageInput: $('imageInput'),
+    uploadPlaceholder: $('uploadPlaceholder'),
+    imagePreview: $('imagePreview'),
+    previewImg: $('previewImg'),
+    removeImage: $('removeImage'),
+    generateBtn: $('generateBtn'),
+    status: $('status')
   };
 }
 
@@ -66,17 +66,17 @@ async function loadSettings() {
   const saved = await chrome.storage.local.get([
     'imageRatio', 'language', 'country', 'sourceType'
   ]);
-  if (saved.imageRatio)  state.imageRatio  = saved.imageRatio;
-  if (saved.language)    state.language    = saved.language;
-  if (saved.country)     state.country     = saved.country;
-  if (saved.sourceType)  state.sourceType  = saved.sourceType;
+  if (saved.imageRatio) state.imageRatio = saved.imageRatio;
+  if (saved.language) state.language = saved.language;
+  if (saved.country) state.country = saved.country;
+  if (saved.sourceType) state.sourceType = saved.sourceType;
 }
 
 function saveSettings() {
   chrome.storage.local.set({
     imageRatio: state.imageRatio,
-    language:   state.language,
-    country:    state.country,
+    language: state.language,
+    country: state.country,
     sourceType: state.sourceType
   });
 }
@@ -84,16 +84,16 @@ function saveSettings() {
 // ── Render ──────────────────────────────────────────────────────────
 function renderUI() {
   el.imageRatio.value = state.imageRatio;
-  el.language.value   = state.language;
+  el.language.value = state.language;
   populateCountries();
 
   if (state.sourceType === 'url') {
-    el.sourceUrl.checked  = true;
-    el.urlGroup.style.display  = 'block';
+    el.sourceUrl.checked = true;
+    el.urlGroup.style.display = 'block';
     el.textGroup.style.display = 'none';
   } else {
     el.sourceText.checked = true;
-    el.urlGroup.style.display  = 'none';
+    el.urlGroup.style.display = 'none';
     el.textGroup.style.display = 'block';
   }
 }
@@ -138,14 +138,14 @@ function bindEvents() {
   // Source type toggle
   el.sourceUrl.addEventListener('change', () => {
     state.sourceType = 'url';
-    el.urlGroup.style.display  = 'block';
+    el.urlGroup.style.display = 'block';
     el.textGroup.style.display = 'none';
     saveSettings();
   });
 
   el.sourceText.addEventListener('change', () => {
     state.sourceType = 'text';
-    el.urlGroup.style.display  = 'none';
+    el.urlGroup.style.display = 'none';
     el.textGroup.style.display = 'block';
     saveSettings();
   });
@@ -214,12 +214,12 @@ function handleImageFile(file) {
   reader.onload = (e) => {
     const dataUrl = e.target.result;
     uploadedImage = {
-      base64:   dataUrl.split(',')[1],
+      base64: dataUrl.split(',')[1],
       mimeType: file.type,
-      name:     file.name
+      name: file.name
     };
     el.previewImg.src = dataUrl;
-    el.imagePreview.style.display      = 'flex';
+    el.imagePreview.style.display = 'flex';
     el.uploadPlaceholder.style.display = 'none';
   };
   reader.readAsDataURL(file);
@@ -227,14 +227,14 @@ function handleImageFile(file) {
 
 function clearImage() {
   uploadedImage = null;
-  el.imagePreview.style.display      = 'none';
+  el.imagePreview.style.display = 'none';
   el.uploadPlaceholder.style.display = 'flex';
   el.imageInput.value = '';
 }
 
 function clearInputs() {
   // Clear source fields
-  el.urlInput.value  = '';
+  el.urlInput.value = '';
   el.textInput.value = '';
   el.charCount.textContent = '0/1000';
   el.charCount.classList.remove('over-limit');
@@ -252,13 +252,13 @@ function buildUrlPrompt() {
   const url = el.urlInput.value.trim();
   if (!url) return null;
 
-  let p = `Create a high-impact news-style social media image in ${state.imageRatio} vertical resolution, similar to a tabloid / news post in ${state.language}.\n\n`;
+  let p = `Create a high-impact news-style social media image in ${state.imageRatio} vertical resolution, similar to a tabloid / news post in ${state.language} and and suggest high engaging viral caption.\n\n`;
 
   if (uploadedImage) {
     p += `Use uploaded image if you need.\n\n`;
   }
 
-  p += `After generating the image, be sure to suggest a highly engaging viral Facebook captions\n\n`;
+  p += `After generating the image, make sure to suggest a highly engaging viral Facebook captions\n\n`;
 
   p += `Source: Use the information from this article:\n`;
   p += `👉 ${url}\n\n`;
@@ -368,7 +368,7 @@ async function handleGenerate() {
     return;
   }
 
-  el.generateBtn.disabled   = true;
+  el.generateBtn.disabled = true;
   el.generateBtn.textContent = 'Sending...';
   showStatus('Sending prompt...', 'info');
 
@@ -381,10 +381,11 @@ async function handleGenerate() {
     const isSupported =
       url.includes('chatgpt.com') ||
       url.includes('chat.openai.com') ||
-      url.includes('gemini.google.com');
+      url.includes('gemini.google.com') ||
+      url.includes('meta.ai');
 
     if (!tab || !isSupported) {
-      showStatus('Please open ChatGPT or Gemini in the active tab.', 'error', prompt);
+      showStatus('Please open ChatGPT, Gemini, or Meta AI in the active tab.', 'error', prompt);
       return;
     }
 
@@ -407,7 +408,9 @@ async function handleGenerate() {
 
     if (response?.success) {
       clearInputs();
-      const target = url.includes('gemini.google.com') ? 'Gemini' : 'ChatGPT';
+      const target = url.includes('gemini.google.com') ? 'Gemini'
+        : url.includes('meta.ai') ? 'Meta AI'
+          : 'ChatGPT';
       showStatus(`Prompt inserted into ${target}! Review and press Send.`, 'success');
     } else {
       showStatus(
@@ -419,7 +422,7 @@ async function handleGenerate() {
   } catch (err) {
     showStatus(`Error: ${err.message}`, 'error', prompt);
   } finally {
-    el.generateBtn.disabled   = false;
+    el.generateBtn.disabled = false;
     el.generateBtn.textContent = 'Generate';
   }
 }
@@ -430,15 +433,15 @@ function delay(ms) {
 }
 
 function showStatus(message, type, promptToCopy = null) {
-  el.status.innerHTML   = '';
+  el.status.innerHTML = '';
   el.status.textContent = message;
-  el.status.className   = `status ${type}`;
+  el.status.className = `status ${type}`;
   el.status.style.display = 'block';
 
   if (promptToCopy) {
     const btn = document.createElement('button');
     btn.textContent = 'Copy Prompt to Clipboard';
-    btn.className   = 'copy-btn';
+    btn.className = 'copy-btn';
     btn.addEventListener('click', async () => {
       await navigator.clipboard.writeText(promptToCopy);
       btn.textContent = 'Copied!';
