@@ -15,12 +15,13 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
 
 // ── Main handler ────────────────────────────────────────────────────
 async function handleGenerate(data) {
-  const { prompt, image } = data;
+  const { prompt } = data;
+  const images = data.images || (data.image ? [data.image] : []);
 
-  // Upload image first (if provided)
-  if (image) {
-    const ok = await uploadImage(image);
-    if (ok) await sleep(1500); // let ChatGPT process the attachment
+  // Upload images first (if provided)
+  if (images.length) {
+    const ok = await uploadImages(images);
+    if (ok) await sleep(1000 + 500 * images.length); // let the site process the attachments
   }
 
   // Inject prompt text
@@ -105,11 +106,22 @@ function injectViaPaste(el, text) {
 }
 
 // ── Image upload ────────────────────────────────────────────────────
-async function uploadImage(imageData) {
-  const file = base64ToFile(imageData);
+function filesToDataTransfer(files) {
+  const dt = new DataTransfer();
+  files.forEach((f) => dt.items.add(f));
+  return dt;
+}
 
-  // Method 1 — find an existing <input type="file">
-  let fileInput = document.querySelector('input[type="file"]');
+async function uploadImages(imageDataList) {
+  const files = imageDataList.map(base64ToFile);
+
+  const isChatGPT = /chatgpt\.com|chat\.openai\.com/.test(location.hostname);
+  if (isChatGPT) return uploadImagesChatGPT(files);
+
+  // Method 1 — find an existing <input type="file"> (prefer one that accepts several files)
+  let fileInput =
+    document.querySelector('input[type="file"][multiple]') ||
+    document.querySelector('input[type="file"]');
 
   // Method 2 — click the attachment button so the input appears
   if (!fileInput) {
@@ -129,13 +141,14 @@ async function uploadImage(imageData) {
     if (attachBtn) {
       attachBtn.click();
       await sleep(600);
-      fileInput = document.querySelector('input[type="file"]');
+      fileInput =
+        document.querySelector('input[type="file"][multiple]') ||
+        document.querySelector('input[type="file"]');
     }
   }
 
   if (fileInput) {
-    const dt = new DataTransfer();
-    dt.items.add(file);
+    const dt = filesToDataTransfer(files);
     fileInput.files = dt.files;
     fileInput.dispatchEvent(new Event('change', { bubbles: true }));
     return true;
@@ -145,8 +158,7 @@ async function uploadImage(imageData) {
   const textarea = findTextarea();
   if (textarea) {
     try {
-      const dt = new DataTransfer();
-      dt.items.add(file);
+      const dt = filesToDataTransfer(files);
       const pasteEvt = new ClipboardEvent('paste', {
         bubbles: true,
         cancelable: true,
@@ -162,8 +174,7 @@ async function uploadImage(imageData) {
   // Method 4 — simulate drag-and-drop
   if (textarea) {
     try {
-      const dt = new DataTransfer();
-      dt.items.add(file);
+      const dt = filesToDataTransfer(files);
       textarea.dispatchEvent(new DragEvent('dragenter', { bubbles: true, dataTransfer: dt }));
       textarea.dispatchEvent(new DragEvent('dragover',  { bubbles: true, dataTransfer: dt }));
       textarea.dispatchEvent(new DragEvent('drop',      { bubbles: true, dataTransfer: dt }));
@@ -173,6 +184,70 @@ async function uploadImage(imageData) {
     }
   }
 
+  return false;
+}
+
+// ChatGPT: the page has several <input type="file"> elements, so picking the
+// first one often targets the wrong uploader. Paste into the composer first
+// (ChatGPT handles pasted images natively), verify an attachment appeared,
+// then fall back to an image-accepting file input, then drag-and-drop.
+async function uploadImagesChatGPT(files) {
+  const editor = findTextarea();
+  const before = countAttachments();
+
+  // 1 — paste into the composer
+  if (editor) {
+    editor.focus();
+    await sleep(100);
+    try {
+      const dt = filesToDataTransfer(files);
+      editor.dispatchEvent(new ClipboardEvent('paste', {
+        bubbles: true, cancelable: true, clipboardData: dt
+      }));
+    } catch { /* ignore */ }
+    if (await waitForAttachment(before)) return true;
+  }
+
+  // 2 — image-accepting file input
+  const inputs = [...document.querySelectorAll('input[type="file"]')];
+  const input =
+    inputs.find(i => i.multiple && /image/.test(i.accept || '')) ||
+    inputs.find(i => /image/.test(i.accept || '')) ||
+    inputs.find(i => !i.accept || i.accept.includes('*')) ||
+    inputs[0];
+  if (input) {
+    const dt = filesToDataTransfer(files);
+    input.files = dt.files;
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    input.dispatchEvent(new Event('change', { bubbles: true }));
+    if (await waitForAttachment(before)) return true;
+  }
+
+  // 3 — drag-and-drop onto the composer
+  const target = editor?.closest('form') || editor;
+  if (target) {
+    const dt = filesToDataTransfer(files);
+    for (const type of ['dragenter', 'dragover', 'drop']) {
+      target.dispatchEvent(new DragEvent(type, { bubbles: true, cancelable: true, dataTransfer: dt }));
+    }
+    if (await waitForAttachment(before)) return true;
+  }
+
+  return false;
+}
+
+function countAttachments() {
+  return document.querySelectorAll(
+    'img[src^="blob:"], [data-testid*="attachment"], [aria-label*="Remove file"], [aria-label*="Remove image"]'
+  ).length;
+}
+
+async function waitForAttachment(before, timeout = 2500) {
+  const end = Date.now() + timeout;
+  while (Date.now() < end) {
+    if (countAttachments() > before) return true;
+    await sleep(150);
+  }
   return false;
 }
 

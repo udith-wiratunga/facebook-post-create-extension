@@ -23,7 +23,8 @@ const DEFAULTS = {
 
 // ── State ───────────────────────────────────────────────────────────
 let state = { ...DEFAULTS };
-let uploadedImage = null; // { base64, mimeType, name }
+const MAX_IMAGES = 10;
+let uploadedImages = []; // [{ base64, mimeType, name, dataUrl }]
 
 // ── DOM refs ────────────────────────────────────────────────────────
 const $ = (id) => document.getElementById(id);
@@ -53,9 +54,7 @@ function cacheElements() {
     imageUpload: $('imageUpload'),
     imageInput: $('imageInput'),
     uploadPlaceholder: $('uploadPlaceholder'),
-    imagePreview: $('imagePreview'),
-    previewImg: $('previewImg'),
-    removeImage: $('removeImage'),
+    imageGrid: $('imageGrid'),
     generateBtn: $('generateBtn'),
     status: $('status')
   };
@@ -158,13 +157,11 @@ function bindEvents() {
   });
 
   // Image upload — click
-  el.imageUpload.addEventListener('click', (e) => {
-    if (e.target === el.removeImage || el.removeImage.contains(e.target)) return;
-    el.imageInput.click();
-  });
+  el.imageUpload.addEventListener('click', () => el.imageInput.click());
 
   el.imageInput.addEventListener('change', (e) => {
-    if (e.target.files.length) handleImageFile(e.target.files[0]);
+    addImageFiles(e.target.files);
+    el.imageInput.value = ''; // allow re-selecting the same file
   });
 
   // Image upload — drag & drop
@@ -178,25 +175,42 @@ function bindEvents() {
   el.imageUpload.addEventListener('drop', (e) => {
     e.preventDefault();
     el.imageUpload.classList.remove('drag-over');
-    if (e.dataTransfer.files.length) handleImageFile(e.dataTransfer.files[0]);
+    addImageFiles(e.dataTransfer.files);
+  });
+
+  // Image upload — make the drop zone focusable so the panel receives Ctrl+V
+  el.imageUpload.tabIndex = 0;
+  el.imageUpload.addEventListener('mouseenter', () => {
+    const a = document.activeElement;
+    if (!a || a === document.body) el.imageUpload.focus({ preventScroll: true });
   });
 
   // Image upload — paste anywhere in the panel
   document.addEventListener('paste', (e) => {
-    const items = e.clipboardData?.items;
-    if (!items) return;
-    for (const item of items) {
-      if (item.type.startsWith('image/')) {
-        handleImageFile(item.getAsFile());
-        break;
-      }
+    const cd = e.clipboardData;
+    if (!cd) return;
+    let files = [...(cd.files || [])].filter(f => f.type.startsWith('image/'));
+    if (!files.length) {
+      files = [...(cd.items || [])]
+        .filter(i => i.kind === 'file' && i.type.startsWith('image/'))
+        .map(i => i.getAsFile())
+        .filter(Boolean);
+    }
+    if (files.length) {
+      e.preventDefault();
+      addImageFiles(files);
     }
   });
 
-  // Remove image
-  el.removeImage.addEventListener('click', (e) => {
-    e.stopPropagation();
-    clearImage();
+  // Image upload — explicit "Paste screenshot" button (works even when Ctrl+V doesn't)
+  document.getElementById('pasteImageBtn').addEventListener('click', pasteImageFromClipboard);
+
+  // Remove a single image (delegated)
+  el.imageGrid.addEventListener('click', (e) => {
+    const btn = e.target.closest('.remove-image');
+    if (!btn) return;
+    uploadedImages.splice(Number(btn.dataset.index), 1);
+    renderImages();
   });
 
   // Generate
@@ -204,31 +218,82 @@ function bindEvents() {
 }
 
 // ── Image handling ──────────────────────────────────────────────────
-function handleImageFile(file) {
-  if (!file || !file.type.startsWith('image/')) {
-    showStatus('Please upload a valid image file.', 'error');
+async function pasteImageFromClipboard() {
+  try {
+    const items = await navigator.clipboard.read();
+    for (const item of items) {
+      const type = item.types.find(t => t.startsWith('image/'));
+      if (type) {
+        const blob = await item.getType(type);
+        addImageFiles([new File([blob], `screenshot-${Date.now()}.${type.split('/')[1]}`, { type })]);
+        return;
+      }
+    }
+    showStatus('No image found in clipboard. Take a screenshot (Win+Shift+S) first.', 'error');
+  } catch (err) {
+    showStatus('Could not read clipboard: ' + err.message, 'error');
+  }
+}
+
+function readAsDataURL(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(file);
+  });
+}
+
+async function addImageFiles(fileList) {
+  const files = [...(fileList || [])];
+  const images = files.filter(f => f && f.type.startsWith('image/'));
+  if (!images.length) {
+    if (files.length) showStatus('Please upload a valid image file.', 'error');
     return;
   }
 
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    const dataUrl = e.target.result;
-    uploadedImage = {
+  const room = MAX_IMAGES - uploadedImages.length;
+  if (room <= 0) {
+    showStatus(`You can add up to ${MAX_IMAGES} images.`, 'error');
+    return;
+  }
+  if (images.length > room) {
+    showStatus(`Only ${room} more image(s) added — limit is ${MAX_IMAGES}.`, 'error');
+  }
+
+  for (const file of images.slice(0, room)) {
+    const dataUrl = await readAsDataURL(file);
+    uploadedImages.push({
       base64: dataUrl.split(',')[1],
       mimeType: file.type,
-      name: file.name
-    };
-    el.previewImg.src = dataUrl;
-    el.imagePreview.style.display = 'flex';
-    el.uploadPlaceholder.style.display = 'none';
-  };
-  reader.readAsDataURL(file);
+      name: file.name || `image-${Date.now()}.png`,
+      dataUrl
+    });
+  }
+  renderImages();
 }
 
-function clearImage() {
-  uploadedImage = null;
-  el.imagePreview.style.display = 'none';
-  el.uploadPlaceholder.style.display = 'flex';
+function renderImages() {
+  el.imageGrid.innerHTML = '';
+  uploadedImages.forEach((img, i) => {
+    const thumb = document.createElement('div');
+    thumb.className = 'image-thumb';
+    const im = document.createElement('img');
+    im.src = img.dataUrl;
+    im.alt = img.name;
+    const btn = document.createElement('button');
+    btn.className = 'remove-image';
+    btn.title = 'Remove image';
+    btn.dataset.index = i;
+    btn.innerHTML = '&times;';
+    thumb.append(im, btn);
+    el.imageGrid.appendChild(thumb);
+  });
+}
+
+function clearImages() {
+  uploadedImages = [];
+  renderImages();
   el.imageInput.value = '';
 }
 
@@ -239,11 +304,17 @@ function clearInputs() {
   el.charCount.textContent = '0/1000';
   el.charCount.classList.remove('over-limit');
 
-  // Clear image
-  clearImage();
+  // Clear images
+  clearImages();
 }
 
 // ── Prompt builders ─────────────────────────────────────────────────
+function uploadedImagesLine() {
+  return uploadedImages.length > 1
+    ? `Use the ${uploadedImages.length} uploaded images if you need.\n\n`
+    : `Use uploaded image if you need.\n\n`;
+}
+
 function buildPrompt() {
   return state.sourceType === 'url' ? buildUrlPrompt() : buildTextPrompt();
 }
@@ -254,8 +325,8 @@ function buildUrlPrompt() {
 
   let p = `Create a high-impact news-style social media image in ${state.imageRatio} vertical resolution, similar to a tabloid / news post in ${state.language} and and suggest high engaging viral caption.\n\n`;
 
-  if (uploadedImage) {
-    p += `Use uploaded image if you need.\n\n`;
+  if (uploadedImages.length) {
+    p += uploadedImagesLine();
   }
 
   p += `After generating the image, make sure to suggest a highly engaging viral Facebook captions\n\n`;
@@ -314,8 +385,8 @@ function buildTextPrompt() {
   p += `Topic: ${text}\n\n`;
   p += `Country/Context: ${state.country}\n\n`;
 
-  if (uploadedImage) {
-    p += `Use uploaded image if you need.\n\n`;
+  if (uploadedImages.length) {
+    p += uploadedImagesLine();
   }
 
   p += `Design requirements:\n\n`;
@@ -403,7 +474,10 @@ async function handleGenerate() {
     // Send data to the content script
     const response = await chrome.tabs.sendMessage(tab.id, {
       type: 'GENERATE_PROMPT',
-      data: { prompt, image: uploadedImage }
+      data: {
+        prompt,
+        images: uploadedImages.map(({ base64, mimeType, name }) => ({ base64, mimeType, name }))
+      }
     });
 
     if (response?.success) {

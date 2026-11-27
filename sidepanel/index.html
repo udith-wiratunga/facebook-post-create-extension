@@ -79,11 +79,11 @@
 
   <!-- Image Section -->
   <div class="section">
-    <div class="section-title">Image (Optional)</div>
+    <div class="section-title">Images (Optional, up to 10)</div>
 
     <div class="form-group">
       <div class="image-upload" id="imageUpload">
-        <input type="file" id="imageInput" accept="image/*" style="display: none;">
+        <input type="file" id="imageInput" accept="image/*" multiple style="display: none;">
         <div class="upload-placeholder" id="uploadPlaceholder">
           <div class="upload-icon">
             <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
@@ -92,14 +92,12 @@
               <polyline points="21 15 16 10 5 21"></polyline>
             </svg>
           </div>
-          <div class="upload-text">Click, drag & drop, or paste an image</div>
-          <div class="upload-hint">Supports JPG, PNG, GIF, WebP</div>
-        </div>
-        <div class="image-preview" id="imagePreview">
-          <img id="previewImg" alt="Preview">
-          <button class="remove-image" id="removeImage" title="Remove image">&times;</button>
+          <div class="upload-text">Click, drag & drop, or paste images</div>
+          <div class="upload-hint">Supports JPG, PNG, GIF, WebP — add as many as you need</div>
         </div>
       </div>
+      <div class="image-grid" id="imageGrid"></div>
+      <button type="button" class="paste-btn" id="pasteImageBtn">Paste screenshot from clipboard</button>
     </div>
   </div>
 
